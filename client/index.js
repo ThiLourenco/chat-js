@@ -1,12 +1,26 @@
+/*
+node index.js \
+  --username thiagols \
+  --room sala01 \
+  --hostUri localhost
+
+*/
+
 import Events from 'events';
+import CliConfig from './src/cliConfig.js';
+import SocketClient from './src/socket.js';
 import TerminalController from "./src/terminalController.js";
+
+// extraindo o username, room, e hostUri
+const [nodePath, filePath, ...commands] = process.argv
+const config = CliConfig.parseArguments(commands);
 
 // componente responsável por trafegar entre a camada controller e outras camadas
 const componentEmitter = new Events();
 
-const controller = new TerminalController();
-await controller.initializeTable(componentEmitter);
+const socketClient = new SocketClient(config)
+await socketClient.initialize()
 
-
-
+// const controller = new TerminalController();
+// await controller.initializeTable(componentEmitter);
 
