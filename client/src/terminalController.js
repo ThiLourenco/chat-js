@@ -86,7 +86,7 @@ export default class TerminalController {
   // método para startar todo o projeto, receberá os eventos para gerenciamento, realizando um dê para
   async initializeTable(eventEmitter) {
     const components = new ComponentsBuilder()
-      .setScreen({ title: 'YowChat - Thiago Lourenço' })
+      .setScreen({ title: 'YowChat - Thiago' })
       .setLayoutComponent()
       .setInputComponent(this.#onInputReceived(eventEmitter)) // no text area ao digitar adionará a fn que printará na tela a message
       .setChatComponent()
