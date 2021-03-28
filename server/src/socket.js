@@ -6,6 +6,13 @@ export default class SocketServer {
   constructor({port}) {
     this.port = port
   }
+  
+  // enviando msg para o driver para atualizar da interface, só o socket do driver pode comunicar com o driver
+  async sendMessage(socket, event, message) {
+    const data = JSON.stringify({ event, message })
+    // dividindo a fila de messagem com \n para chegada de varios eventos de messagem ao mesmo tempo
+    socket.write(`${data}\n`)
+  }
 
   // inicializando o server http para utilizar o socket
   async initialize(eventEmitter) {

@@ -8,19 +8,31 @@ node index.js \
 
 import Events from 'events';
 import CliConfig from './src/cliConfig.js';
+import EventManager from './src/eventManager.js';
 import SocketClient from './src/socket.js';
 import TerminalController from "./src/terminalController.js";
 
-// extraindo o username, room, e hostUri
+// mapeando os args username, room, e hostUri
 const [nodePath, filePath, ...commands] = process.argv
 const config = CliConfig.parseArguments(commands);
 
-// componente responsável por trafegar entre a camada controller e outras camadas
+// componente responsável por trafegar entre a camada 
+// controller e outras camadas, gerenciador de eventos
 const componentEmitter = new Events();
 
 const socketClient = new SocketClient(config)
 await socketClient.initialize()
 
-// const controller = new TerminalController();
-// await controller.initializeTable(componentEmitter);
+const eventManager = new EventManager({ componentEmitter, socketClient })
+const events = eventManager.getEvents()
+socketClient.attachEvents(events)
+
+const data = {
+  roomId : config.room,
+  userName : config.username
+}
+eventManager.joinRoomAndWaitForMessages(data);
+
+const controller = new TerminalController();
+await controller.initializeTable(componentEmitter);
 

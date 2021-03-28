@@ -1,10 +1,15 @@
+import { constants } from "./constants.js";
+
 export default class Controller {
+  // propriedades para gerenciamento de users global e rooms
   #users = new Map();
+  #rooms = new Map();
+
   constructor({ socketServer }) {
     this.socketServer = socketServer
   }
 
-  // retorna quando uma conexão foi estabilizada
+  // método quando uma conexão foi estabilizada
   onNewConnection(socket) {
     const { id } = socket
     console.log('connection stablished with', id)
@@ -17,17 +22,72 @@ export default class Controller {
     socket.on('end', this.#onSocketClosed(id))
   }
 
-  // evento de fim conexão do driver do socket
-  #onSocketClosed(id) {
-    return data => {
-      console.log('onSocketClosed', data.toString());
+  // gerenciar os users na mesma sala
+  async joinRoom(socketId, data) {
+    const userData = data;
+    console.log(`${userData.userName} joined! ${[socketId]}`);
+    const { roomId } = userData;
+    // atualizando o user ao entrar na room
+    const user = this.#updateGlobalUserData(socketId, userData)
+    const users = this.#joinUserOnRoom(roomId, user)
+
+    const currentUsers = Array.from(users.values())
+      .map(({ id, userName }) => ({ userName, id }))
+
+    // atualiza o usuario que conectou sobre 
+    // quais usuarios já estão conectados na mesma sala!
+    this.socketServer
+      .sendMessage(user.socket, constants.event.UPDATE_USERS, currentUsers);
+
+    // avisa a rede que um novo usuário conectou-se
+    this.broadCast({
+      socketId,
+      roomId,
+      message: { id: socketId, userName: userData.userName},
+      event: constants.event.NEW_USER_CONNECTED,
+    })
+
+  }
+
+  // enviar messagem para todos na room
+  broadCast({ socketId, roomId, event, message, includeCurrentSocket = false }) {
+    const usersOnRoom = this.#rooms.get(roomId)
+
+    for(const [ key, user ] of usersOnRoom) {
+      if (!includeCurrentSocket && key === socketId) continue;
+
+      this.socketServer.sendMessage(user.socket, event, message);
     }
   }
 
-  // será identificado qual o evento que o client deseja receber
+  #joinUserOnRoom(roomId, user) { 
+    // se nao existir nenhum user na sala, retorna o Map
+    const usersOnRoom = this.#rooms.get(roomId) ?? new Map()
+    usersOnRoom.set(user.id, user)
+    this.#rooms.set(roomId, usersOnRoom)
+
+    return usersOnRoom;
+  }
+
+  // gerenciamento de fim conexão do driver do socket
+  #onSocketClosed(id) {
+    return data => {
+      console.log('onSocketClosed', id);
+    }
+  }
+
+  // gerenciando o data ao enviar um evento
   #onSocketData(id) {
     return data => {
-      console.log('onSocketData', data.toString());
+      try {
+        const { event, message } = JSON.parse(data);
+        // define qual evento será chamado, e envia a message
+        this[event](id, message);
+        
+      } catch (error) {
+        console.error(`wrong event format !!`,error, data.toString());
+      }
+
     }
   }
 
