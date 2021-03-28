@@ -19,11 +19,28 @@ export default class EventManager {
     })
   }
 
-  // método para gerenciar todos usuários atualiziados na room
+  // método para gerenciar todos usuários atualizados na room
   updateUsers(users) {
     const connectedUsers = users
     connectedUsers.forEach(({ id, userName }) => this.#allUsers.set(id, userName));
     this.#updateUsersComponent();
+  }
+
+  // método para gerenciar todos os usuários desconectados
+  disconnectUser(user) {
+    const { userName, id } = user
+    this.#allUsers.delete(id)
+
+    this.#updateActivityLogComponent(`${userName} left!`)
+    this.#updateUsersComponent()
+  }
+
+  // método para gerenciar recebimento de messagem na room
+  message(message) {
+    this.componentEmitter.emit(
+      constants.events.app.MESSAGE_RECEIVED,
+      message
+    )
   }
 
   // método para gerenciar quado o user é conectado na room

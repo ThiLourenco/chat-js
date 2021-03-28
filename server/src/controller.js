@@ -60,6 +60,20 @@ export default class Controller {
     }
   }
 
+  // recebimento de message
+  message(socketId, data) {
+    // roomId para enviar msg somente para quem estiver na room
+    const { userName, roomId } = this.#users.get(socketId)
+
+    this.broadCast({
+      roomId,
+      socketId,
+      event: constants.event.MESSAGE,
+      message: { userName, message: data },
+      includeCurrentSocket: true,   // a messagem será enviado para o server da room
+    })
+  }
+
   #joinUserOnRoom(roomId, user) { 
     // se nao existir nenhum user na sala, retorna o Map
     const usersOnRoom = this.#rooms.get(roomId) ?? new Map()
@@ -69,10 +83,27 @@ export default class Controller {
     return usersOnRoom;
   }
 
+  #logoutUser(id, roomId) {
+    this.#users.delete(id)
+    const usersOnRoom = this.#rooms.get(roomId)
+    usersOnRoom.delete(id)
+
+    this.#rooms.set(roomId, usersOnRoom)
+  }
+
   // gerenciamento de fim conexão do driver do socket
   #onSocketClosed(id) {
-    return data => {
-      console.log('onSocketClosed', id);
+    return _ => {
+      const { userName, roomId } = this.#users.get(id)
+      console.log(userName, 'diconnected', id)
+      this.#logoutUser(id, roomId)
+
+      this.broadCast({
+        roomId,
+        message: { id, userName },
+        socketId: id,
+        event: constants.event.DISCONNECT_USER,
+      })
     }
   }
 
