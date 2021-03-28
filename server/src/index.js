@@ -35,7 +35,7 @@ const eventEmitter = new Event();
 const port = process.env.PORT || 9898;
 const socketServer = new SocketServer({ port });
 const server = await socketServer.initialize(eventEmitter)
-console.log('socket serve is running at', server.address().port)
+console.log('socket server is running at', server.address().port)
 
 const controller = new Controller({ socketServer })
 eventEmitter.on(

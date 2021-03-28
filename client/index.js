@@ -1,6 +1,23 @@
+#!/usr/bin/env node
+
 /*
+Prod
+
+hacker-chat \
+  --username annon \
+  --room sala01 \
+
+  or
+
+./index.js
+  --username annon \
+  --room sala01 \
+
+-- 
+
+Dev
 node index.js \
-  --username thiagols \
+  --username anoon \
   --room sala01 \
   --hostUri localhost
 
