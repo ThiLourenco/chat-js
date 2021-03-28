@@ -9,3 +9,6 @@ Project JS Expert
 - Run project 
 `hacker-chat --username annon --room room01`
 
+
+<img src="./assets/1.png">
+
